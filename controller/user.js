@@ -66,7 +66,7 @@ const registerUser = async (req, res) => {
             });
         }
     } catch (error) {
-        console.error("Error en la consulta a la base de datos:", error); 
+        console.error("Error en la consulta a la base de datos:", error);
         return res.status(500).json({
             status: 'error',
             message: 'Error en la consulta a la base de datos'
@@ -136,9 +136,38 @@ const login = async (req, res) => {
 }
 
 
+const profile = async (req, res) => {
+    //recibir parametro del id user
+    const id = req.params.id;
+    //consulta en db para sacar los datos del usuario 
+    //nota el select ocultara el valor de la contraseña y el rol
+    const PerfilData = await user.findById(id).select({password:0,role:0});
+    const UserProfile = PerfilData;
+
+    if (!UserProfile) {
+
+        return res.status(404).send({
+            status: 'error',
+            message: 'No se ha encontrado el usuario'
+        })
+    } else {
+        return res.status(200).send({
+            status: 'success',
+            message: 'Perfil de usuario',
+            user: UserProfile
+        })
+    }
+
+
+    //devilver datos al usuario
+}
+
+
+
 //exportar acciones 
 module.exports = {
     prueba_User,
     registerUser,
     login,
+    profile
 }
