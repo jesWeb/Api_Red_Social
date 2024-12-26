@@ -18,10 +18,9 @@ const createToken = (user) => {
         email: user.email,
         role: user.role,
         image: user.image,
-         //parametros de creacion y expiracion 
         iat: moment().unix(),
-        exp: moment().add(30, 'days').unix
-
+        exp: moment().add(30,"days").unix()
+         //parametros de creacion y expiracion 
     };
     //rotrnar token 
     return jwt.encode(payload, KySecret)
