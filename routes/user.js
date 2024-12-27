@@ -9,6 +9,7 @@ router.get("/prueba-user", check.auth, UserController.prueba_User);
 router.post("/register", UserController.registerUser);
 router.post("/login", UserController.login);
 router.get("/perfil/:id", check.auth, UserController.profile);
+router.get("/list/:page?",check.auth,UserController.list)
 
 
 

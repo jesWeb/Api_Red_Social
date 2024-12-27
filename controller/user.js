@@ -1,6 +1,7 @@
 //dependecioas y modulos 
 const bycrypt = require("bcrypt")
 const user = require("../models/user")
+const itemsPerPage = require("mongoose-pagination")
 //servicios 
 const jwt = require("../services/jwt");
 //acciones de pruebas 
@@ -141,7 +142,10 @@ const profile = async (req, res) => {
     const id = req.params.id;
     //consulta en db para sacar los datos del usuario 
     //nota el select ocultara el valor de la contraseña y el rol
-    const PerfilData = await user.findById(id).select({password:0,role:0});
+    const PerfilData = await user.findById(id).select({
+        password: 0,
+        role: 0
+    });
     const UserProfile = PerfilData;
 
     if (!UserProfile) {
@@ -157,10 +161,57 @@ const profile = async (req, res) => {
             user: UserProfile
         })
     }
-
-
     //devilver datos al usuario
 }
+
+//listar usuarios 
+
+const list = async (req, res) => {
+    try {
+        // Controlar la página en la que estamos
+        let page = 1;
+
+        if (req.params.page) {
+            page = req.params.page;
+        }
+
+        page = parseInt(page);
+
+        // Número de items por página
+        let itemsPerPage = 5;
+
+      
+        const result = await user.find().sort('_id').paginate(page, itemsPerPage);
+
+        // Verificar si no hay usuarios
+        if (!result ) {
+            return res.status(404).send({
+                status: 'error',
+                message: 'No hay usuarios que mostrar'
+            });
+        }
+
+        
+        return res.status(200).send({
+            status: 'success',
+            users: result.docs, 
+            page,
+            itemsPerPage,
+            total: result.total, 
+            pages: Math.ceil(result.total / itemsPerPage)
+        });
+
+    } catch (err) {
+        // Manejar errores de consulta
+        return res.status(500).send({
+            status: 'error',
+            message: 'Error en la consulta de usuarios',
+            error: err.message,
+        });
+    }
+};
+
+
 
 
 
@@ -169,5 +220,6 @@ module.exports = {
     prueba_User,
     registerUser,
     login,
-    profile
+    profile,
+    list
 }
