@@ -1,4 +1,7 @@
 //dependecioas y modulos 
+const fs = require('fs');
+const path = require('path');
+
 const bycrypt = require("bcrypt")
 const user = require("../models/user")
 const itemsPerPage = require("mongoose-pagination")
@@ -289,15 +292,85 @@ const update = async (req, res) => {
             message: 'Error en la consulta a la base de datos'
         });
     }
-
-
-
-
 }
 
 
-//
+//subir archivos 
 
+const upload = async (req, res) => {
+
+    //revoger el fiechero de laimagen  y ver si existe 
+    if (!req.file) {
+        return res.status(404).send({
+            status: "error",
+            menssage: "Peticio no incluye imgane"
+        })
+    }
+    // conseguir el nombre del archivo 
+    let image = req.file.originalname;
+    // sacar la extension 
+    const imagesplit = image.split("\.");
+    const extension = imagesplit[1]
+    //comprobar extension 
+    if (extension != "png" && extension != "jpg" && extension != "jpeg") {
+
+        //si no es correcto borrar del archivo 
+        //si no es es6te eliminara el archivo  subido 
+        const filePath = req.file.path;
+        //file system 
+        const fileDelete = fs.unlinkSync(filePath);
+
+        return res.status(400).send({
+            status: "error",
+            message: "Extension del fiechero invalida"
+        })
+
+    }
+
+    //si es correcta guardar db 
+    let userUpdated = await user.findOneAndUpdate(req.user.id, {
+        image: req.file.filename
+    }, {
+        new: true
+    });
+
+    if (!userUpdated) {
+        return res.status(500).send({
+            status: "error",
+            message: "Error al subir el archivo"
+        })
+    }
+
+    return res.status(200).send({
+        status: 'success',
+        user: userUpdated,
+        file: req.file,
+    })
+}
+
+
+const avatar = async (req, res) => {
+    // sacar el parametro de la url 
+    const file = await req.params.file;
+    //montar el path de la imagen 
+    const filePath = "./uploads/avatars/" + file;
+    //comprobar si existe 
+    fs.stat(filePath, (exists) => {
+
+        if (!exists) {
+            //devolver u file 
+            return res.sendFile(path.resolve(filePath));
+
+        } else {
+            return res.status(404).send({
+                status: "error",
+                menssage: "no existe la imagen "
+            });
+        }
+
+
+    });
+}
 
 
 //exportar acciones 
@@ -307,5 +380,7 @@ module.exports = {
     login,
     profile,
     list,
-    update
+    update,
+    upload,
+    avatar
 }

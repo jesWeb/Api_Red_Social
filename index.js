@@ -25,7 +25,7 @@ const followRoutes = require("./routes/follow");
 //ejecutar rutas
 app.use("/api/user",UseRoutes);
 app.use("/api/publication",PublicationRoutes);
-app.use("/api/follows",followRoutes);
+app.use("/api/follow",followRoutes);
 
 
 
