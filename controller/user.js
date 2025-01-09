@@ -37,7 +37,7 @@ const registerUser = async (req, res) => {
         });
 
         // Si existe el usuario
-        if (users) {
+        if (users && users.legth >= 1) {
             return res.status(200).send({
                 status: 'error',
                 message: 'El usuario ya existe'
@@ -180,24 +180,24 @@ const list = async (req, res) => {
         // Número de items por página
         let itemsPerPage = 5;
 
-      
+
         const result = await user.find().sort('_id').paginate(page, itemsPerPage);
 
         // Verificar si no hay usuarios
-        if (!result ) {
+        if (!result) {
             return res.status(404).send({
                 status: 'error',
                 message: 'No hay usuarios que mostrar'
             });
         }
 
-        
+
         return res.status(200).send({
             status: 'success',
-            users: result.docs, 
+            users: result.docs,
             page,
             itemsPerPage,
-            total: result.total, 
+            total: result.total,
             pages: Math.ceil(result.total / itemsPerPage)
         });
 
@@ -212,6 +212,91 @@ const list = async (req, res) => {
 };
 
 
+//update 
+
+const update = async (req, res) => {
+
+
+    //recoger info del usuario 
+    let usertoUpdate = req.body;
+    let userIdentity = req.user;
+
+    //eliminar campos sobrantes
+    delete usertoUpdate.iat;
+    delete usertoUpdate.exp;
+    delete usertoUpdate.role;
+    delete usertoUpdate.image;
+
+
+    try { //compronar si el usuario ya extiste 
+
+        // Control de usuarios duplicados
+        const users = await user.find({
+            $or: [{
+                    email: usertoUpdate.email.toLowerCase()
+                },
+                {
+                    nickname: usertoUpdate.nickname.toLowerCase()
+                }
+            ]
+        });
+
+        // Si existe el usuario
+        let userIsset = false;
+
+        users.forEach(() => {
+            if (users && user._id != userIdentity.id) userIsset = true;
+        })
+
+
+        if (userIsset) {
+            return res.status(200).send({
+                status: 'error',
+                message: 'El usuario ya, existe'
+            });
+        }
+
+        //cifrarla contrasena
+        if (usertoUpdate.password) {
+            let pwd = await bycrypt.hash(usertoUpdate.password, 10);
+            usertoUpdate.password = pwd;
+        }
+
+        //buscar y actualizar 
+        let userUpdated;
+        try {
+            userUpdated = await user.findByIdAndUpdate(userIdentity.id, usertoUpdate, {
+                new: true
+            });
+        } catch (error) {
+            console.error("Error en la actualización del usuario:", error);
+            return res.status(500).json({
+                status: 'error',
+                message: 'Error al actualizar el usuario'
+            });
+        }
+
+        return res.status(200).send({
+            status: 'success',
+            message: 'metodo update',
+            usertoUpdate
+        });
+
+    } catch (error) {
+        console.error("Error en la consulta a la base de datos:", error);
+        return res.status(500).json({
+            status: 'error',
+            message: 'Error en la consulta a la base de datos'
+        });
+    }
+
+
+
+
+}
+
+
+//
 
 
 
@@ -221,5 +306,6 @@ module.exports = {
     registerUser,
     login,
     profile,
-    list
+    list,
+    update
 }

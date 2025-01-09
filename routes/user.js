@@ -5,16 +5,20 @@ const UserController = require("../controller/user");
 const check = require("../middlewares/auth");
 
 //rutas Api
+
+//user
 router.get("/prueba-user", check.auth, UserController.prueba_User);
 router.post("/register", UserController.registerUser);
 router.post("/login", UserController.login);
 router.get("/perfil/:id", check.auth, UserController.profile);
-router.get("/list/:page?",check.auth,UserController.list)
+router.get("/list/:page?", check.auth, UserController.list);
+router.put("/update", check.auth, UserController.update);
 
 
+//
 
 
-
+//exportar modulos
 module.exports = router;
 
 
