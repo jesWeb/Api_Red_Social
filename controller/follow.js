@@ -1,6 +1,12 @@
 const follow = require("../models/follow");
 const user = require("../models/user");
 
+//dependencias 
+const mongoosePaginate = require("mongoose-pagination");
+
+//importar se3rvicios 
+const followServ = require("../services/followUserIds");
+
 //acciones de pruebas 
 const prueba_follow = (req, res) => {
     return res.status(200).send({
@@ -47,12 +53,12 @@ const unfollow = (req, res) => {
     const followedId = req.params.id;
 
     // Eliminar el registro de seguimiento
-   const followDeleted = follow.deleteOne({
+    const followDeleted = follow.deleteOne({
         "user": userId,
         "followed": followedId
     });
 
-    
+
 
     if (followDeleted) {
         // Respuesta exitosa
@@ -70,16 +76,80 @@ const unfollow = (req, res) => {
 };
 
 
-
-
 //accion de listado de usuarios que estoy siguiendo 
-//acco=ion  de listado de ususarios que me siguen 
 
+
+const following = (req, res) => {
+
+    try {
+
+        //sacar el id del usuario 
+        let userId = req.user.id;
+        //comprobar si llega el id por paramentro url 
+        if (req.params.id) {
+            userId = req.params.id;
+        }
+        //si llega la pagina si no la pagina 1
+        let page = 1;
+        if (req.params.page) {
+            page = req.parama.page;
+        }
+        //usuarios por pagina quiero mostrar
+        const itemsPage = 5;
+
+        //find de follow , popupale datos de los usuarios y paginar con moongose
+        follow.find({
+                user: userId
+            }).populate("user followed", "-password -role -__v")
+            .paginate(page, itemsPage, (error, follows, total) => {
+
+
+                //listado de usuarios de usuario 
+                //sacar un array de  ids de los usuarios que me siguen y los que sigo como jesus 
+                let followUserIds = followServ.followUserIds(req.user.id);
+
+
+
+
+                return status(200).send({
+                    status: 'success',
+                    menssage: "Listado de usuarios que te siguen ",
+                    follows,
+                    total,
+                    pages: Math.ceil(total / itemsPage),
+                    user_following: followUserIds.following,
+                    user_followme: followUserIds.followers
+
+                })
+            })
+
+    } catch (error) {
+
+    }
+
+}
+
+
+//acco=ion  de listado de ususarios que me siguen 
+const followers = (req, res) => {
+    try {
+
+
+        return res.status(200).send({
+            message: "listado de usuarios a quin me sigo .",
+            status: "success",
+        });
+    } catch (error) {
+
+    }
+}
 
 
 //exportar acciones 
 module.exports = {
     prueba_follow,
     save,
-    unfollow
+    unfollow,
+    following,
+    followers
 }

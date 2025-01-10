@@ -7,6 +7,10 @@ const user = require("../models/user")
 const itemsPerPage = require("mongoose-pagination")
 //servicios 
 const jwt = require("../services/jwt");
+const followService = require("../services/followUserIds");
+const {
+    following
+} = require('./follow');
 //acciones de pruebas 
 const prueba_User = (req, res) => {
     return res.status(200).send({
@@ -150,12 +154,16 @@ const profile = async (req, res) => {
         role: 0
     });
     const UserProfile = PerfilData;
+    //ifno de segimiento 
+    const followInfo = await followService.followUser(req.user.id, id);
 
     if (!UserProfile) {
 
         return res.status(404).send({
             status: 'error',
-            message: 'No se ha encontrado el usuario'
+            message: 'No se ha encontrado el usuario',
+            following: followInfo.following,
+            follower: followInfo.follower
         })
     } else {
         return res.status(200).send({
@@ -185,6 +193,9 @@ const list = async (req, res) => {
 
 
         const result = await user.find().sort('_id').paginate(page, itemsPerPage);
+        //sacra un array de ids de los usuarios que me sigue y los que sigo como usuario 
+        let folloUserIds = await followService.folloUserIds(req.user.id);
+
 
         // Verificar si no hay usuarios
         if (!result) {
@@ -201,7 +212,9 @@ const list = async (req, res) => {
             page,
             itemsPerPage,
             total: result.total,
-            pages: Math.ceil(result.total / itemsPerPage)
+            pages: Math.ceil(result.total / itemsPerPage),
+            user_following: followUserIds.following,
+            user_followme: followUserIds.followers
         });
 
     } catch (err) {
@@ -213,8 +226,6 @@ const list = async (req, res) => {
         });
     }
 };
-
-
 //update 
 
 const update = async (req, res) => {
@@ -267,7 +278,7 @@ const update = async (req, res) => {
 
         //buscar y actualizar 
         let userUpdated;
-        
+
         try {
             userUpdated = await user.findByIdAndUpdate(userIdentity.id, usertoUpdate, {
                 new: true
@@ -294,10 +305,7 @@ const update = async (req, res) => {
         });
     }
 }
-
-
 //subir archivos 
-
 const upload = async (req, res) => {
 
     //revoger el fiechero de laimagen  y ver si existe 
@@ -350,8 +358,6 @@ const upload = async (req, res) => {
         file: req.file,
     })
 }
-
-
 const avatar = async (req, res) => {
     // sacar el parametro de la url 
     const file = await req.params.file;
