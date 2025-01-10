@@ -267,6 +267,7 @@ const update = async (req, res) => {
 
         //buscar y actualizar 
         let userUpdated;
+        
         try {
             userUpdated = await user.findByIdAndUpdate(userIdentity.id, usertoUpdate, {
                 new: true
@@ -328,7 +329,9 @@ const upload = async (req, res) => {
     }
 
     //si es correcta guardar db 
-    let userUpdated = await user.findOneAndUpdate(req.user.id, {
+    let userUpdated = await user.findOneAndUpdate({
+        _id: req.user.id
+    }, {
         image: req.file.filename
     }, {
         new: true
