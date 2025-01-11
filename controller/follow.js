@@ -134,6 +134,39 @@ const following = (req, res) => {
 const followers = (req, res) => {
     try {
 
+        //sacar el id del usuario 
+        let userId = req.user.id;
+        //comprobar si llega el id por paramentro url 
+        if (req.params.id) {
+            userId = req.params.id;
+        }
+        //si llega la pagina si no la pagina 1
+        let page = 1;
+        if (req.params.page) {
+            page = req.parama.page;
+        }
+        //usuarios por pagina quiero mostrar
+        const itemsPage = 5;
+
+        //find de follow , popupale datos de los usuarios y paginar con moongose
+        follow.find({
+                followed: userId
+            }).populate("user followed", "-password -role -__v")
+            .paginate(page, itemsPage, async (error, follows, total) => {
+               
+                let followUserIds = followServ.followUserIds(req.user.id);
+                return status(200).send({
+                    status: 'success',
+                    menssage: "Listado de usuarios que te siguen ",
+                    follows,
+                    total,
+                    pages: Math.ceil(total / itemsPage),
+                    user_following: followUserIds.following,
+                    user_followme: followUserIds.followers
+
+                })
+            })
+
 
         return res.status(200).send({
             message: "listado de usuarios a quin me sigo .",
